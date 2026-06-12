@@ -696,4 +696,251 @@
       q: 'O recrutador pergunta: "O que você sabe sobre a nossa empresa?". O que você faz?',
       opts: [
         'Dizer que não teve tempo de pesquisar, mas que aprende rápido.',
-        'Falar 
+        'Falar mal do emprego anterior quebra a ética profissional e gera desconfiança imediata — o recrutador pensa: "o que esse candidato vai falar de nós um dia?". Foque sempre no futuro, no crescimento e no alinhamento com a nova oportunidade.'
+    },
+    {
+      q: 'O entrevistador pergunta sua pretensão salarial logo na primeira fase. Qual a melhor estratégia?',
+      opts: [
+        'Dar um valor exato, alto e irredutível para demonstrar que valoriza seu trabalho.',
+        'Dizer: "Qualquer valor serve, só preciso de uma oportunidade agora."',
+        'Indicar uma faixa salarial baseada em pesquisas de mercado, mostrando-se aberto a negociar conforme o pacote total de benefícios.',
+        'Recusar-se a responder até que a empresa faça uma oferta final.'
+      ],
+      answer: 2,
+      why: 'Apresentar uma faixa baseada em dados reais demonstra que você conhece seu valor de mercado e age com profissionalismo. Aceitar qualquer valor desvaloriza você; recusar-se a responder bloqueia o processo. A chave é flexibilidade fundamentada em pesquisa.'
+    },
+    {
+      q: 'Como demonstrar que você sabe lidar com pressão e prazos muito apertados?',
+      opts: [
+        'Dizer que nunca se estressa e que trabalha as horas que forem necessárias além da jornada.',
+        'Explicar que utiliza métodos de organização e priorização de tarefas para manter o foco e entregar com qualidade.',
+        'Admitir que costuma atrasar sob pressão, mas que o resultado final sempre é bom.',
+        'Dizer que prazos curtos são reflexo de má gestão e que tenta evitá-los.'
+      ],
+      answer: 1,
+      why: 'O recrutador quer ver resiliência e método, não heroísmo irresponsável. Mostrar que você tem ferramentas de priorização e inteligência emocional para gerenciar demandas sob estresse é um grande diferencial competitivo em qualquer processo seletivo.'
+    },
+    {
+      q: 'Qual a melhor forma de responder: "Por que deveríamos contratar você e não os outros candidatos?"',
+      opts: [
+        'Garantir que você é o melhor candidato do mundo e que ninguém se esforça mais que você.',
+        'Dizer que precisa muito da vaga para pagar suas contas e estabilizar sua vida.',
+        'Conectar suas principais competências e experiências diretamente às dores e necessidades que a empresa quer resolver com essa vaga.',
+        'Repetir apenas os tópicos já listados no seu currículo de forma linear.'
+      ],
+      answer: 2,
+      why: 'Essa pergunta é a sua proposta de valor. Você vence ao demonstrar que o seu perfil é a solução exata para o problema que o recrutador tem em mãos. Conectar competências às necessidades reais da vaga é muito mais poderoso do que elogios genéricos ou repetir o currículo.'
+    }
+  ];
+
+  const LETTERS = ['A', 'B', 'C', 'D'];
+
+  /* ─── State ──────────────────────────────────────────────────────── */
+  let current   = 0;
+  let score     = 0;
+  let dotStates = [];   // 'pending' | 'correct' | 'wrong'
+
+  /* ─── Init ───────────────────────────────────────────────────────── */
+  function init() {
+    current   = 0;
+    score     = 0;
+    dotStates = Array(QUIZ.length).fill('pending');
+    document.getElementById('scoreCount').textContent = '0';
+    buildDots();
+    renderQuestion(0);
+  }
+
+  /* ─── Step Dots ──────────────────────────────────────────────────── */
+  function buildDots() {
+    const wrap = document.getElementById('stepDots');
+    wrap.innerHTML = '';
+    for (let i = 0; i < QUIZ.length; i++) {
+      const d = document.createElement('div');
+      d.className = 'step-dot';
+      d.id = `dot${i}`;
+      d.textContent = i + 1;
+      wrap.appendChild(d);
+    }
+    syncDots();
+  }
+
+  function syncDots() {
+    for (let i = 0; i < QUIZ.length; i++) {
+      const d = document.getElementById(`dot${i}`);
+      if (!d) continue;
+      d.className = 'step-dot';
+      if      (dotStates[i] === 'correct') d.classList.add('is-correct');
+      else if (dotStates[i] === 'wrong')   d.classList.add('is-wrong');
+      else if (i === current)              d.classList.add('is-active');
+    }
+  }
+
+  /* ─── Render Question ────────────────────────────────────────────── */
+  function renderQuestion(idx) {
+    const q     = QUIZ[idx];
+    const total = QUIZ.length;
+
+    document.getElementById('progressFill').style.width  = `${(idx / total) * 100}%`;
+    document.getElementById('questionLabel').textContent = `Pergunta ${idx + 1} de ${total}`;
+    document.getElementById('questionText').textContent  = q.q;
+
+    /* Options */
+    const list = document.getElementById('optionsList');
+    list.innerHTML = '';
+    q.opts.forEach((opt, i) => {
+      const li  = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.dataset.idx = i;
+      btn.innerHTML = `<span class="option-letter">${LETTERS[i]}</span><span>${opt}</span>`;
+      btn.addEventListener('click', () => selectAnswer(i));
+      li.appendChild(btn);
+      list.appendChild(li);
+    });
+
+    /* Reset justification */
+    document.getElementById('justBox').className     = 'justification-box';
+    document.getElementById('justText').textContent  = '';
+
+    /* Hide next button */
+    document.getElementById('nextBtn').classList.remove('is-visible');
+
+    syncDots();
+  }
+
+  /* ─── Answer Selection ───────────────────────────────────────────── */
+  function selectAnswer(selected) {
+    const q   = QUIZ[current];
+    const all = document.querySelectorAll('.option-btn');
+
+    all.forEach((btn, i) => {
+      btn.disabled = true;
+      if      (i === q.answer)                       btn.classList.add('is-correct');
+      else if (i === selected && i !== q.answer)     btn.classList.add('is-wrong');
+      else                                           btn.classList.add('is-dimmed');
+    });
+
+    const isRight = selected === q.answer;
+    if (isRight) {
+      score++;
+      dotStates[current] = 'correct';
+    } else {
+      dotStates[current] = 'wrong';
+    }
+
+    document.getElementById('scoreCount').textContent = score;
+    syncDots();
+
+    /* Justification */
+    document.getElementById('justBox').className    = 'justification-box is-visible';
+    document.getElementById('justText').textContent = q.why;
+
+    /* Next button */
+    const isLast = current === QUIZ.length - 1;
+    const nextBtn = document.getElementById('nextBtn');
+    nextBtn.innerHTML = isLast
+      ? `Ver Resultado
+         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+           <polyline points="9 18 15 12 9 6"/>
+         </svg>`
+      : `Próxima
+         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+           <path d="M5 12h14M12 5l7 7-7 7"/>
+         </svg>`;
+    nextBtn.classList.add('is-visible');
+  }
+
+  /* ─── Navigate to Next ───────────────────────────────────────────── */
+  function nextQuestion() {
+    if (current < QUIZ.length - 1) {
+      current++;
+      const screen = document.getElementById('quizScreen');
+      screen.style.opacity   = '0';
+      screen.style.transform = 'translateY(12px)';
+      setTimeout(() => {
+        renderQuestion(current);
+        screen.style.opacity   = '1';
+        screen.style.transform = 'translateY(0)';
+      }, 210);
+    } else {
+      showResults();
+    }
+  }
+
+  /* ─── Show Results ───────────────────────────────────────────────── */
+  function showResults() {
+    const quizScreen = document.getElementById('quizScreen');
+    quizScreen.style.opacity = '0';
+    setTimeout(() => {
+      quizScreen.style.display = 'none';
+    }, 200);
+
+    const total = QUIZ.length;
+    const pct   = score / total;
+    const circ  = 2 * Math.PI * 58; // ≈ 364.42
+
+    /* Ring setup */
+    const fg = document.getElementById('ringFg');
+    fg.style.strokeDasharray  = circ;
+    fg.style.strokeDashoffset = circ;   // start hidden
+
+    /* Colour & copy based on score */
+    let color, title, message;
+    if (score <= 4) {
+      color   = '#DC2626';
+      title   = '📚 Hora de estudar mais!';
+      message = 'Você ainda precisa treinar antes de encarar processos seletivos reais. Reveja as justificativas de cada questão e pratique suas respostas em voz alta — a repetição cria confiança.';
+    } else if (score <= 7) {
+      color   = '#D97706';
+      title   = '⚡ Bom caminho — ajuste os detalhes!';
+      message = 'Você tem uma base sólida, mas alguns pontos ainda podem custar uma vaga. Foque nas perguntas que errou, afine sua argumentação e trabalhe a estratégia de comunicação.';
+    } else if (score <= 8) {
+      color   = '#059669';
+      title   = '🎯 Muito bem! Quase perfeito.';
+      message = 'Você demonstrou conhecimento sólido das melhores práticas. Com pequenos ajustes nos pontos falhos, estará completamente pronto para impressionar qualquer recrutador.';
+    } else {
+      color   = '#2563EB';
+      title   = '🚀 Pronto para a vaga!';
+      message = 'Excelente! Você domina as melhores práticas para processos seletivos. Seu pensamento estratégico em entrevistas é um diferencial competitivo real. Boa sorte!';
+    }
+
+    fg.style.stroke = color;
+    document.getElementById('ringScore').style.color  = color;
+    document.getElementById('ringScore').textContent  = score;
+    document.getElementById('ringLabel').textContent  = `de ${total} acertos`;
+    document.getElementById('resultTitle').textContent = title;
+    document.getElementById('resultMsg').textContent  = message;
+    document.getElementById('bdCorrect').textContent  = score;
+    document.getElementById('bdWrong').textContent    = total - score;
+    document.getElementById('bdPct').textContent      = `${Math.round(pct * 100)}%`;
+    document.getElementById('progressFill').style.width = '100%';
+
+    /* Show result screen */
+    const rs = document.getElementById('resultScreen');
+    rs.className = 'is-visible';
+
+    /* Animate ring after two frames (ensures transition runs) */
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        fg.style.strokeDashoffset = circ * (1 - pct);
+      });
+    });
+  }
+
+  /* ─── Restart ────────────────────────────────────────────────────── */
+  function restartQuiz() {
+    document.getElementById('resultScreen').className = '';
+    const screen = document.getElementById('quizScreen');
+    screen.style.display   = '';
+    screen.style.opacity   = '1';
+    screen.style.transform = '';
+    init();
+  }
+
+  /* ─── Boot ───────────────────────────────────────────────────────── */
+  init();
+  </script>
+
+</body>
+</html>
+
