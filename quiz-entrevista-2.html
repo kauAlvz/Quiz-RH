@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz · Preparação para Entrevistas de Emprego</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── Reset ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    button { font-family: inherit; border: none; cursor: pointer; background: none; }
+    ul { list-style: none; }
+
+    /* ─── Tokens ─────────────────────────────────── */
+    :root {
+      --navy:          #071B3E;
+      --navy-mid:      #0E2A58;
+      --blue:          #2563EB;
+      --blue-hover:    #1D4ED8;
+      --blue-light:    #EFF6FF;
+      --blue-ring:     rgba(37,99,235,0.12);
+      --white:         #FFFFFF;
+      --surface:       #F8FAFC;
+      --border:        #E2E8F0;
+      --text:          #0F172A;
+      --muted:         #64748B;
+      --correct:       #059669;
+      --correct-bg:    #ECFDF5;
+      --correct-bdr:   #6EE7B7;
+      --wrong:         #DC2626;
+      --wrong-bg:      #FEF2F2;
+      --wrong-bdr:     #FCA5A5;
+      --amber:         #92400E;
+      --amber-bg:      #FFFBEB;
+      --amber-bdr:     #FCD34D;
+      --amber-accent:  #F59E0B;
+    }
+
+    /* ─── Base ───────────────────────────────────── */
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      background: var(--navy);
+      background-image:
+        radial-gradient(ellipse at 15% 15%, rgba(37,99,235,0.18) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 85%, rgba(14,42,88,0.9)   0%, transparent 55%),
+        linear-gradient(155deg, var(--navy) 0%, #0B2248 45%, var(--navy-mid) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 36px 16px 44px;
+      -webkit-font-smoothing: antialiased;
+      position: relative;
+    }
+
+    /* dot-grid overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 26px 26px;
+      pointer-events: none;
+    }
+
+    /* ─── Site Header ─────────────────────────────── */
+    .site-header {
+      text-align: center;
+      margin-bottom: 32px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(255,255,255,0.07);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.11);
+      color: #93C5FD;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 7px 16px;
+      border-radius: 99px;
+      margin-bottom: 18px;
+    }
+
+    .site-header h1 {
+      font-size: clamp(20px, 4.5vw, 30px);
+      font-weight: 900;
+      color: #FFFFFF;
+      line-height: 1.2;
+      letter-spacing: -0.035em;
+    }
+
+    .site-header p {
+      color: rgba(255,255,255,0.45);
+      font-size: 14px;
+      margin-top: 9px;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+    }
+
+    /* ─── Card ────────────────────────────────────── */
+    .card {
+      background: var(--white);
+      border-radius: 20px;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.04),
+        0 4px 8px  rgba(0,0,0,0.07),
+        0 28px 72px rgba(0,0,0,0.32);
+      width: 100%;
+      max-width: 680px;
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+      animation: cardIn 0.55s cubic-bezier(0.16,1,0.3,1) both;
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(26px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0)    scale(1);    }
+    }
+
+    /* ─── Progress Bar ────────────────────────────── */
+    .progress-track {
+      height: 3px;
+      background: #F1F5F9;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--blue) 0%, #60A5FA 100%);
+      border-radius: 0 99px 99px 0;
+      width: 0%;
+      transition: width 0.55s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    /* ─── Quiz Screen ─────────────────────────────── */
+    #quizScreen {
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .card-body {
+      padding: 30px 32px 22px;
+    }
+
+    /* Step dots */
+    .step-dots {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 26px;
+    }
+
+    .step-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      border: 2px solid var(--border);
+      color: var(--muted);
+      background: var(--surface);
+      transition: all 0.28s cubic-bezier(0.4,0,0.2,1);
+      flex-shrink: 0;
+    }
+
+    .step-dot.is-active {
+      border-color: var(--blue);
+      color: var(--blue);
+      background: var(--blue-light);
+      box-shadow: 0 0 0 4px var(--blue-ring);
+    }
+
+    .step-dot.is-correct {
+      border-color: var(--correct-bdr);
+      background: var(--correct-bg);
+      color: var(--correct);
+    }
+
+    .step-dot.is-wrong {
+      border-color: var(--wrong-bdr);
+      background: var(--wrong-bg);
+      color: var(--wrong);
+    }
+
+    /* Question */
+    .question-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 10px;
+    }
+
+    .question-text {
+      font-size: clamp(15px, 2.5vw, 18px);
+      font-weight: 700;
+      line-height: 1.55;
+      color: var(--text);
+      letter-spacing: -0.01em;
+      margin-bottom: 24px;
+    }
+
+    /* Options */
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .option-btn {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      width: 100%;
+      text-align: left;
+      padding: 13px 15px;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      transition:
+        border-color 0.16s ease,
+        background   0.16s ease,
+        transform    0.16s ease,
+        box-shadow   0.16s ease,
+        opacity      0.2s  ease;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.5;
+      color: var(--text);
+    }
+
+    .option-btn:not(:disabled):hover {
+      border-color: var(--blue);
+      background: var(--blue-light);
+      transform: translateX(5px);
+      box-shadow: -3px 0 0 0 var(--blue);
+    }
+
+    .option-btn:disabled { cursor: default; }
+
+    .option-letter {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #E2E8F0;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--muted);
+      margin-top: 1px;
+      transition: background 0.16s ease, color 0.16s ease;
+    }
+
+    .option-btn:not(:disabled):hover .option-letter {
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .option-btn.is-correct {
+      border-color: var(--correct-bdr);
+      background: var(--correct-bg);
+      color: var(--correct);
+      box-shadow: none;
+      transform: none;
+    }
+
+    .option-btn.is-correct .option-letter {
+      background: var(--correct);
+      color: #fff;
+    }
+
+    .option-btn.is-wrong {
+      border-color: var(--wrong-bdr);
+      background: var(--wrong-bg);
+      color: var(--wrong);
+      box-shadow: none;
+      transform: none;
+    }
+
+    .option-btn.is-wrong .option-letter {
+      background: var(--wrong);
+      color: #fff;
+    }
+
+    .option-btn.is-dimmed { opacity: 0.38; }
+
+    /* Justification */
+    .justification-box {
+      margin-top: 18px;
+      border-radius: 10px;
+      background: var(--amber-bg);
+      border: 1px solid var(--amber-bdr);
+      border-left: 4px solid var(--amber-accent);
+      padding: 14px 16px;
+      display: none;
+    }
+
+    .justification-box.is-visible {
+      display: block;
+      animation: justIn 0.32s cubic-bezier(0.16,1,0.3,1) both;
+    }
+
+    @keyframes justIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .justification-label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 10.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--amber-accent);
+      margin-bottom: 8px;
+    }
+
+    .justification-text {
+      font-size: 13.5px;
+      line-height: 1.7;
+      color: var(--amber);
+    }
+
+    /* Card Footer */
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 32px 28px;
+    }
+
+    .score-counter {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .score-counter strong {
+      color: var(--correct);
+      font-weight: 800;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 22px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1;
+      transition: all 0.18s ease;
+    }
+
+    .btn-primary {
+      background: var(--blue);
+      color: #fff;
+      border: 2px solid transparent;
+    }
+
+    .btn-primary:hover {
+      background: var(--blue-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(37,99,235,0.38);
+    }
+
+    .btn-primary:active { transform: translateY(0); box-shadow: none; }
+
+    /* Next button – hidden until answer is selected */
+    #nextBtn {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(8px);
+      transition:
+        opacity   0.28s cubic-bezier(0.4,0,0.2,1),
+        transform 0.28s cubic-bezier(0.4,0,0.2,1),
+        background 0.18s ease,
+        box-shadow 0.18s ease;
+    }
+
+    #nextBtn.is-visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(0);
+    }
+
+    /* ─── Result Screen ───────────────────────────── */
+    #resultScreen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 48px 32px 44px;
+    }
+
+    #resultScreen.is-visible {
+      display: flex;
+      animation: cardIn 0.5s cubic-bezier(0.16,1,0.3,1) both;
+    }
+
+    /* Score Ring */
+    .ring-wrap {
+      position: relative;
+      width: 148px;
+      height: 148px;
+      margin-bottom: 28px;
+    }
+
+    .ring-svg { transform: rotate(-90deg); display: block; }
+
+    .ring-bg {
+      fill: none;
+      stroke: #F1F5F9;
+      stroke-width: 10;
+    }
+
+    .ring-fg {
+      fill: none;
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke-dasharray:  364.42;
+      stroke-dashoffset: 364.42;
+      transition: stroke-dashoffset 1.3s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    .ring-inner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ring-score {
+      font-size: 46px;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      line-height: 1;
+    }
+
+    .ring-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+      margin-top: 4px;
+    }
+
+    /* Result text */
+    .result-title {
+      font-size: clamp(18px, 3.5vw, 22px);
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.025em;
+      margin-bottom: 12px;
+    }
+
+    .result-message {
+      font-size: 14.5px;
+      line-height: 1.72;
+      color: var(--muted);
+      max-width: 430px;
+      margin-bottom: 34px;
+    }
+
+    .result-breakdown {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .breakdown-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      min-width: 80px;
+    }
+
+    .breakdown-num {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+
+    .breakdown-num.c-correct { color: var(--correct); }
+    .breakdown-num.c-wrong   { color: var(--wrong); }
+
+    .breakdown-lbl {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    .breakdown-divider {
+      width: 1px;
+      height: 40px;
+      background: var(--border);
+      align-self: center;
+    }
+
+    /* ─── Footer ──────────────────────────────────── */
+    .site-footer {
+      margin-top: 24px;
+      color: rgba(255,255,255,0.22);
+      font-size: 12px;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ─── Responsive ──────────────────────────────── */
+    @media (max-width: 520px) {
+      body { padding: 24px 12px 36px; }
+      .card-body  { padding: 22px 18px 18px; }
+      .card-footer { padding: 12px 18px 22px; }
+      .step-dot { width: 24px; height: 24px; font-size: 10px; }
+      .step-dots { gap: 4px; }
+      #resultScreen { padding: 36px 20px 32px; }
+    }
+
+    /* Respect reduced-motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Site Header ────────────────────────────── -->
+  <header class="site-header">
+    <div class="header-badge">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="7" width="20" height="14" rx="2"/>
+        <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+      </svg>
+      Quiz · Processos Seletivos
+    </div>
+    <h1>Você está pronto para<br>a entrevista de emprego?</h1>
+    <p>10 situações reais &nbsp;·&nbsp; Respostas estratégicas &nbsp;·&nbsp; Feedback imediato</p>
+  </header>
+
+  <!-- ── Card ──────────────────────────────────── -->
+  <div class="card" id="quizCard">
+
+    <!-- QUIZ SCREEN -->
+    <div id="quizScreen">
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+
+      <div class="card-body">
+        <div class="step-dots" id="stepDots"></div>
+        <p class="question-label" id="questionLabel">Pergunta 1 de 10</p>
+        <p class="question-text"  id="questionText"></p>
+        <ul class="options-list"  id="optionsList"></ul>
+
+        <div class="justification-box" id="justBox">
+          <div class="justification-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>
+            </svg>
+            Por que essa é a melhor resposta?
+          </div>
+          <p class="justification-text" id="justText"></p>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <p class="score-counter">Acertos: <strong id="scoreCount">0</strong></p>
+        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">
+          Próxima
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- RESULT SCREEN -->
+    <div id="resultScreen">
+      <div class="ring-wrap">
+        <svg class="ring-svg" width="148" height="148" viewBox="0 0 148 148">
+          <circle class="ring-bg" cx="74" cy="74" r="58"/>
+          <circle class="ring-fg" id="ringFg"  cx="74" cy="74" r="58"/>
+        </svg>
+        <div class="ring-inner">
+          <div class="ring-score" id="ringScore"></div>
+          <div class="ring-label"  id="ringLabel"></div>
+        </div>
+      </div>
+
+      <div class="result-breakdown">
+        <div class="breakdown-item">
+          <span class="breakdown-num c-correct" id="bdCorrect">—</span>
+          <span class="breakdown-lbl">Acertos</span>
+        </div>
+        <div class="breakdown-divider"></div>
+        <div class="breakdown-item">
+          <span class="breakdown-num c-wrong" id="bdWrong">—</span>
+          <span class="breakdown-lbl">Erros</span>
+        </div>
+        <div class="breakdown-divider"></div>
+        <div class="breakdown-item">
+          <span class="breakdown-num" id="bdPct" style="color:var(--blue)">—</span>
+          <span class="breakdown-lbl">Taxa</span>
+        </div>
+      </div>
+
+      <h2 class="result-title"   id="resultTitle"></h2>
+      <p  class="result-message" id="resultMsg"></p>
+
+      <div>
+        <button class="btn btn-primary" onclick="restartQuiz()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>
+          </svg>
+          Refazer o Quiz
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="site-footer">
+    Baseado em boas práticas de recrutamento e seleção &nbsp;·&nbsp; Bons estudos!
+  </footer>
+
+  <script>
+  /* ─── Quiz Data ──────────────────────────────────────────────────── */
+  const QUIZ = [
+    {
+      q: 'O recrutador te pergunta: "Onde você se vê daqui a 5 anos?". Qual a melhor abordagem?',
+      opts: [
+        'Sendo dono do meu próprio negócio e fora da empresa.',
+        'Não sei, o futuro a Deus pertence, prefiro focar no hoje.',
+        'Crescendo na empresa, assumindo novas responsabilidades e contribuindo para o sucesso do time de forma sólida.',
+        'No seu lugar, ocupando o cargo de liderança atual.'
+      ],
+      answer: 2,
+      why: 'Recrutadores buscam estabilidade e ambição equilibrada. Demonstrar que quer crescer junto com a empresa transmite comprometimento de longo prazo e alinhamento com os objetivos do negócio — exatamente o que o recrutador quer ouvir.'
+    },
+    {
+      q: 'Quanto tempo antes do horário agendado você deve chegar para uma entrevista presencial?',
+      opts: [
+        'Exatamente no horário, nem um minuto antes ou depois.',
+        'Entre 10 a 15 minutos antes.',
+        'Uma hora antes, para mostrar que é muito ansioso pela vaga.',
+        'Não importa, desde que avise caso for atrasar.'
+      ],
+      answer: 1,
+      why: 'Chegar de 10 a 15 minutos antes mostra profissionalismo, pontualidade e respeito pelo tempo do entrevistador. Chegar com muito mais antecedência pode criar desconforto na recepção e sinalizar despreparo emocional.'
+    },
+    {
+      q: 'Ao responder "Qual o seu maior defeito?", o que é mais estratégico dizer?',
+      opts: [
+        '"Sou perfeccionista" ou "Trabalho demais".',
+        'Listar um defeito grave que comprometa diretamente a vaga (ex: "Tenho dificuldade de acordar cedo").',
+        'Dizer que não possui defeitos relevantes.',
+        'Citar uma oportunidade de melhoria real, não essencial à vaga, explicando o que já faz para desenvolvê-la.'
+      ],
+      answer: 3,
+      why: 'Autoconhecimento genuíno e ação corretiva são o que o recrutador busca. Clichês como "sou perfeccionista" soam falsos e ensaiados. Mostrar que você identifica suas limitações e trabalha ativamente para superá-las demonstra maturidade profissional real.'
+    },
+    {
+      q: 'O recrutador pergunta: "O que você sabe sobre a nossa empresa?". O que você faz?',
+      opts: [
+        'Dizer que não teve tempo de pesquisar, mas que aprende rápido.',
+        'Falar apenas o segmento básico que viu no site 5 minutos antes de entrar.',
+        'Demonstrar que entendeu a missão, os valores e os serviços, citando um projeto recente ou aspecto da cultura que chamou sua atenção.',
+        'Dizer que quer trabalhar lá puramente pelo salário e pelos benefícios.'
+      ],
+      answer: 2,
+      why: 'Mostrar que você pesquisou a fundo prova interesse real, proatividade e alinhamento cultural. Isso diferencia você imediatamente de candidatos genéricos e demonstra que você trata essa oportunidade como uma escolha estratégica de carreira.'
+    },
+    {
+      q: 'Como responder: "Conte-me sobre uma vez em que você teve um conflito com um colega de trabalho."',
+      opts: [
+        'Dizer que nunca teve conflitos porque se dá bem com absolutamente todo mundo.',
+        'Explicar a situação focando em como o colega estava errado e como você resolveu sozinho.',
+        'Relatar uma situação real de forma neutra, focando em comunicação, empatia e no resultado positivo alcançado.',
+        'Dizer que prefere ignorar conflitos e focar apenas nas suas tarefas individuais.'
+      ],
+      answer: 2,
+      why: 'Conflitos são inevitáveis em qualquer ambiente de trabalho. O recrutador quer avaliar inteligência emocional, maturidade e capacidade de mediação. Afirmar que nunca houve conflitos soa falso; culpar o outro demonstra falta de autocrítica.'
+    },
+    {
+      q: 'O recrutador diz: "Você tem alguma pergunta para mim?". Qual a melhor postura?',
+      opts: [
+        'Dizer: "Não, nenhuma — você explicou tudo muito bem!"',
+        'Perguntar na hora: "Quantos dias de férias terei?" ou "Qual é o valor exato do vale-refeição?"',
+        'Fazer perguntas estratégicas sobre o dia a dia do cargo, as metas da área ou os próximos passos do processo.',
+        'Perguntar se você já passou e quando poderá assinar o contrato.'
+      ],
+      answer: 2,
+      why: 'Fazer perguntas inteligentes demonstra curiosidade intelectual e engajamento genuíno. Mostra que você também avalia se a empresa faz sentido para sua carreira. Não perguntar nada sinaliza desinteresse; perguntar sobre benefícios de imediato passa a mensagem errada.'
+    },
+    {
+      q: 'Perguntado "Por que você deixou (ou quer deixar) seu último emprego?", como agir?',
+      opts: [
+        'Falar abertamente sobre como a liderança era tóxica ou a empresa era desorganizada.',
+        'Focar no desejo de evolução profissional, na busca por novos desafios e em como essa vaga se alinha com seus objetivos de carreira.',
+        'Dizer diretamente que saiu apenas porque o salário era baixo e quer ganhar mais.',
+        'Evitar responder, dizendo que prefere manter o passado no passado.'
+      ],
+      answer: 1,
+      why: 'Falar mal do emprego anterior quebra a ética profissional e gera desconfiança imediata — o recrutador pensa: "o que esse candidato vai falar de nós um dia?". Foque sempre no futuro, no crescimento e no alinhamento com a nova oportunidade.'
+    },
+    {
+      q: 'O entrevistador pergunta sua pretensão salarial logo na primeira fase. Qual a melhor estratégia?',
+      opts: [
+        'Dar um valor exato, alto e irredutível para demonstrar que valoriza seu trabalho.',
+        'Dizer: "Qualquer valor serve, só preciso de uma oportunidade agora."',
+        'Indicar uma faixa salarial baseada em pesquisas de mercado, mostrando-se aberto a negociar conforme o pacote total de benefícios.',
+        'Recusar-se a responder até que a empresa faça uma oferta final.'
+      ],
+      answer: 2,
+      why: 'Apresentar uma faixa baseada em dados reais demonstra que você conhece seu valor de mercado e age com profissionalismo. Aceitar qualquer valor desvaloriza você; recusar-se a responder bloqueia o processo. A chave é flexibilidade fundamentada em pesquisa.'
+    },
+    {
+      q: 'Como demonstrar que você sabe lidar com pressão e prazos muito apertados?',
+      opts: [
+        'Dizer que nunca se estressa e que trabalha as horas que forem necessárias além da jornada.',
+        'Explicar que utiliza métodos de organização e priorização de tarefas para manter o foco e entregar com qualidade.',
+        'Admitir que costuma atrasar sob pressão, mas que o resultado final sempre é bom.',
+        'Dizer que prazos curtos são reflexo de má gestão e que tenta evitá-los.'
+      ],
+      answer: 1,
+      why: 'O recrutador quer ver resiliência e método, não heroísmo irresponsável. Mostrar que você tem ferramentas de priorização e inteligência emocional para gerenciar demandas sob estresse é um grande diferencial competitivo em qualquer processo seletivo.'
+    },
+    {
+      q: 'Qual a melhor forma de responder: "Por que deveríamos contratar você e não os outros candidatos?"',
+      opts: [
+        'Garantir que você é o melhor candidato do mundo e que ninguém se esforça mais que você.',
+        'Dizer que precisa muito da vaga para pagar suas contas e estabilizar sua vida.',
+        'Conectar suas principais competências e experiências diretamente às dores e necessidades que a empresa quer resolver com essa vaga.',
+        'Repetir apenas os tópicos já listados no seu currículo de forma linear.'
+      ],
+      answer: 2,
+      why: 'Essa pergunta é a sua proposta de valor. Você vence ao demonstrar que o seu perfil é a solução exata para o problema que o recrutador tem em mãos. Conectar competências às necessidades reais da vaga é muito mais poderoso do que elogios genéricos ou repetir o currículo.'
+    }
+  ];
+
+  const LETTERS = ['A', 'B', 'C', 'D'];
+
+  /* ─── State ──────────────────────────────────────────────────────── */
+  let current   = 0;
+  let score     = 0;
+  let dotStates = [];   // 'pending' | 'correct' | 'wrong'
+
+  /* ─── Init ───────────────────────────────────────────────────────── */
+  function init() {
+    current   = 0;
+    score     = 0;
+    dotStates = Array(QUIZ.length).fill('pending');
+    document.getElementById('scoreCount').textContent = '0';
+    buildDots();
+    renderQuestion(0);
+  }
+
+  /* ─── Step Dots ──────────────────────────────────────────────────── */
+  function buildDots() {
+    const wrap = document.getElementById('stepDots');
+    wrap.innerHTML = '';
+    for (let i = 0; i < QUIZ.length; i++) {
+      const d = document.createElement('div');
+      d.className = 'step-dot';
+      d.id = `dot${i}`;
+      d.textContent = i + 1;
+      wrap.appendChild(d);
+    }
+    syncDots();
+  }
+
+  function syncDots() {
+    for (let i = 0; i < QUIZ.length; i++) {
+      const d = document.getElementById(`dot${i}`);
+      if (!d) continue;
+      d.className = 'step-dot';
+      if      (dotStates[i] === 'correct') d.classList.add('is-correct');
+      else if (dotStates[i] === 'wrong')   d.classList.add('is-wrong');
+      else if (i === current)              d.classList.add('is-active');
+    }
+  }
+
+  /* ─── Render Question ────────────────────────────────────────────── */
+  function renderQuestion(idx) {
+    const q     = QUIZ[idx];
+    const total = QUIZ.length;
+
+    document.getElementById('progressFill').style.width  = `${(idx / total) * 100}%`;
+    document.getElementById('questionLabel').textContent = `Pergunta ${idx + 1} de ${total}`;
+    document.getElementById('questionText').textContent  = q.q;
+
+    /* Options */
+    const list = document.getElementById('optionsList');
+    list.innerHTML = '';
+    q.opts.forEach((opt, i) => {
+      const li  = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.dataset.idx = i;
+      btn.innerHTML = `<span class="option-letter">${LETTERS[i]}</span><span>${opt}</span>`;
+      btn.addEventListener('click', () => selectAnswer(i));
+      li.appendChild(btn);
+      list.appendChild(li);
+    });
+
+    /* Reset justification */
+    document.getElementById('justBox').className     = 'justification-box';
+    document.getElementById('justText').textContent  = '';
+
+    /* Hide next button */
+    document.getElementById('nextBtn').classList.remove('is-visible');
+
+    syncDots();
+  }
+
+  /* ─── Answer Selection ───────────────────────────────────────────── */
+  function selectAnswer(selected) {
+    const q   = QUIZ[current];
+    const all = document.querySelectorAll('.option-btn');
+
+    all.forEach((btn, i) => {
+      btn.disabled = true;
+      if      (i === q.answer)                       btn.classList.add('is-correct');
+      else if (i === selected && i !== q.answer)     btn.classList.add('is-wrong');
+      else                                           btn.classList.add('is-dimmed');
+    });
+
+    const isRight = selected === q.answer;
+    if (isRight) {
+      score++;
+      dotStates[current] = 'correct';
+    } else {
+      dotStates[current] = 'wrong';
+    }
+
+    document.getElementById('scoreCount').textContent = score;
+    syncDots();
+
+    /* Justification */
+    document.getElementById('justBox').className    = 'justification-box is-visible';
+    document.getElementById('justText').textContent = q.why;
+
+    /* Next button */
+    const isLast = current === QUIZ.length - 1;
+    const nextBtn = document.getElementById('nextBtn');
+    nextBtn.innerHTML = isLast
+      ? `Ver Resultado
+         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+           <polyline points="9 18 15 12 9 6"/>
+         </svg>`
+      : `Próxima
+         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+           <path d="M5 12h14M12 5l7 7-7 7"/>
+         </svg>`;
+    nextBtn.classList.add('is-visible');
+  }
+
+  /* ─── Navigate to Next ───────────────────────────────────────────── */
+  function nextQuestion() {
+    if (current < QUIZ.length - 1) {
+      current++;
+      const screen = document.getElementById('quizScreen');
+      screen.style.opacity   = '0';
+      screen.style.transform = 'translateY(12px)';
+      setTimeout(() => {
+        renderQuestion(current);
+        screen.style.opacity   = '1';
+        screen.style.transform = 'translateY(0)';
+      }, 210);
+    } else {
+      showResults();
+    }
+  }
+
+  /* ─── Show Results ───────────────────────────────────────────────── */
+  function showResults() {
+    const quizScreen = document.getElementById('quizScreen');
+    quizScreen.style.opacity = '0';
+    setTimeout(() => {
+      quizScreen.style.display = 'none';
+    }, 200);
+
+    const total = QUIZ.length;
+    const pct   = score / total;
+    const circ  = 2 * Math.PI * 58; // ≈ 364.42
+
+    /* Ring setup */
+    const fg = document.getElementById('ringFg');
+    fg.style.strokeDasharray  = circ;
+    fg.style.strokeDashoffset = circ;   // start hidden
+
+    /* Colour & copy based on score */
+    let color, title, message;
+    if (score <= 4) {
+      color   = '#DC2626';
+      title   = '📚 Hora de estudar mais!';
+      message = 'Você ainda precisa treinar antes de encarar processos seletivos reais. Reveja as justificativas de cada questão e pratique suas respostas em voz alta — a repetição cria confiança.';
+    } else if (score <= 7) {
+      color   = '#D97706';
+      title   = '⚡ Bom caminho — ajuste os detalhes!';
+      message = 'Você tem uma base sólida, mas alguns pontos ainda podem custar uma vaga. Foque nas perguntas que errou, afine sua argumentação e trabalhe a estratégia de comunicação.';
+    } else if (score <= 8) {
+      color   = '#059669';
+      title   = '🎯 Muito bem! Quase perfeito.';
+      message = 'Você demonstrou conhecimento sólido das melhores práticas. Com pequenos ajustes nos pontos falhos, estará completamente pronto para impressionar qualquer recrutador.';
+    } else {
+      color   = '#2563EB';
+      title   = '🚀 Pronto para a vaga!';
+      message = 'Excelente! Você domina as melhores práticas para processos seletivos. Seu pensamento estratégico em entrevistas é um diferencial competitivo real. Boa sorte!';
+    }
+
+    fg.style.stroke = color;
+    document.getElementById('ringScore').style.color  = color;
+    document.getElementById('ringScore').textContent  = score;
+    document.getElementById('ringLabel').textContent  = `de ${total} acertos`;
+    document.getElementById('resultTitle').textContent = title;
+    document.getElementById('resultMsg').textContent  = message;
+    document.getElementById('bdCorrect').textContent  = score;
+    document.getElementById('bdWrong').textContent    = total - score;
+    document.getElementById('bdPct').textContent      = `${Math.round(pct * 100)}%`;
+    document.getElementById('progressFill').style.width = '100%';
+
+    /* Show result screen */
+    const rs = document.getElementById('resultScreen');
+    rs.className = 'is-visible';
+
+    /* Animate ring after two frames (ensures transition runs) */
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        fg.style.strokeDashoffset = circ * (1 - pct);
+      });
+    });
+  }
+
+  /* ─── Restart ────────────────────────────────────────────────────── */
+  function restartQuiz() {
+    document.getElementById('resultScreen').className = '';
+    const screen = document.getElementById('quizScreen');
+    screen.style.display   = '';
+    screen.style.opacity   = '1';
+    screen.style.transform = '';
+    init();
+  }
+
+  /* ─── Boot ───────────────────────────────────────────────────────── */
+  init();
+  </script>
+
+</body>
+</html>
